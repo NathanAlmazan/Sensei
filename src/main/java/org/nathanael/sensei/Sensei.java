@@ -3,6 +3,7 @@ package org.nathanael.sensei;
 import org.nathanael.sensei.loss.LossFunction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Sensei {
@@ -14,7 +15,7 @@ public class Sensei {
         this.lossFunction = lossFunction;
     }
 
-    public void trainModel(List<TrainingData> trainingData, int epoch) {
+    public void trainModel(List<TrainingData> trainingData, int epoch) throws Exception {
         for (int e = 0; e < epoch; e++) {
             System.out.println("Epoch " + (e + 1));
 
@@ -26,6 +27,9 @@ public class Sensei {
                     activation = layer.forwardPropagation(activation);
 
                 error += lossFunction.forward(activation, data.getOutput()); // save loss
+
+                if (Float.isInfinite(error) || Float.isNaN(error))
+                    throw new Exception("Loss is infinite or not a number. Current activation values are " + Arrays.toString(activation));
 
                 // backward propagation
                 float[] gradients = lossFunction.backward(activation, data.getOutput());
@@ -41,7 +45,7 @@ public class Sensei {
         }
     }
 
-    public void trainModel(List<TrainingData> trainingData, int batchSize, int epoch) {
+    public void trainModel(List<TrainingData> trainingData, int batchSize, int epoch) throws Exception {
         int stepPerEpoch = trainingData.size() / batchSize;
         for (int e = 0; e < epoch; e++) {
             System.out.println("Epoch " + (e + 1));
@@ -57,6 +61,9 @@ public class Sensei {
                         activation = layer.forwardPropagation(activation);
 
                     error += lossFunction.forward(activation, data.getOutput()); // save loss
+
+                    if (Float.isInfinite(error) || Float.isNaN(error))
+                        throw new Exception("Loss is infinite or not a number. Current activation values are " + Arrays.toString(activation));
 
                     // backward propagation
                     float[] gradients = lossFunction.backward(activation, data.getOutput());
@@ -85,6 +92,10 @@ public class Sensei {
         }
 
         return outputs;
+    }
+
+    public LossFunction getLossFunction() {
+        return lossFunction;
     }
 
     public List<Layer> getLayers() {

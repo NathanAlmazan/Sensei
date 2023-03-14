@@ -4,8 +4,6 @@ import org.nathanael.sensei.activations.Activation;
 import org.nathanael.sensei.initialization.WeightInitialization;
 import org.nathanael.sensei.optimizers.Optimizer;
 
-import java.util.Arrays;
-
 public class Layer {
     private final float[][] weights;
     private final float[] biases;
@@ -86,19 +84,37 @@ public class Layer {
         return neurons;
     }
 
-    public void updateWeightAndBiases(int iterations) {
+    public void updateWeightAndBiases(int iterations) throws Exception {
         // update weights and biases
         for (int x = 0; x < weights.length; x++) {
             for (int y = 0; y < weights[x].length; y++) {
-                weights[x][y] -= optimizer.weightDescent(x, y, (weightGradients[x][y] / iterations));
+                float weightStep = optimizer.weightDescent(x, y, (weightGradients[x][y] / iterations));
+
+                if (Float.isInfinite(weightStep) || Float.isNaN(weightStep))
+                    throw new Exception("Weight step is infinite or not a number. Current gradient is " + (weightGradients[x][y] / iterations));
+
+                weights[x][y] -= weightStep;
                 weightGradients[x][y] = 0;
             }
 
-            biases[x] -= optimizer.biasDescent(x, (biasGradients[x] / iterations));
+            float biasStep = optimizer.biasDescent(x, (biasGradients[x] / iterations));
+
+            if (Float.isInfinite(biasStep) || Float.isNaN(biasStep))
+                throw new Exception("Bias step is infinite or not a number. Current gradient is " + (biasGradients[x] / iterations));
+
+            biases[x] -= biasStep;
             biasGradients[x] = 0;
         }
 
         optimizer.updateCounter();
+    }
+
+    public int getOutputSize() {
+        return weights.length;
+    }
+
+    public int getInputSize() {
+        return weights[0].length;
     }
 
     public float[][] getWeights() {
@@ -111,5 +127,9 @@ public class Layer {
 
     public Activation getActivation() {
         return activation;
+    }
+
+    public Optimizer getOptimizer() {
+        return optimizer;
     }
 }

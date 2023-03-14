@@ -3,18 +3,15 @@ package org.nathanael.sensei;
 import org.junit.jupiter.api.Test;
 import org.nathanael.sensei.activations.LeakyReLu;
 import org.nathanael.sensei.activations.ReLu;
-import org.nathanael.sensei.activations.Sigmoid;
 import org.nathanael.sensei.activations.Softmax;
 import org.nathanael.sensei.dataset.CSV;
 import org.nathanael.sensei.dataset.Dataset;
 import org.nathanael.sensei.dataset.Normalization;
 import org.nathanael.sensei.initialization.HeInitial;
 import org.nathanael.sensei.initialization.NormalizedXavier;
-import org.nathanael.sensei.initialization.Xavier;
 import org.nathanael.sensei.loss.BinaryCrossEntropy;
-import org.nathanael.sensei.loss.MeanSquareError;
 import org.nathanael.sensei.optimizers.Adam;
-import org.nathanael.sensei.optimizers.RMSProp;
+import org.nathanael.sensei.store.JsonStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,12 +60,14 @@ public class SenseiTest {
         float learningRate = 0.01f;
 
         List<Layer> layers = new ArrayList<>();
-        layers.add(new Layer(8, 4, new LeakyReLu(), new HeInitial(), new Adam(learningRate, 8, 4)));
-        layers.add(new Layer(4, 4, new LeakyReLu(), new HeInitial(), new Adam(learningRate, 4, 4)));
+        layers.add(new Layer(8, 4, new ReLu(), new HeInitial(), new Adam(learningRate, 8, 4)));
+        layers.add(new Layer(4, 4, new ReLu(), new HeInitial(), new Adam(learningRate, 4, 4)));
         layers.add(new Layer(4, 2, new Softmax(), new NormalizedXavier(), new Adam(learningRate, 4, 2)));
 
+        JsonStorage storage = new JsonStorage();
         Sensei nnet = new Sensei(layers, new BinaryCrossEntropy());
-        nnet.trainModel(trainingData.subList(0, 600), 100, 800);
+//        Sensei nnet = storage.loadModel("E:\\ML\\datasets\\sample.json", 0.02f);
+        nnet.trainModel(trainingData.subList(0, 600), 100, 500);
 
         List<TrainingData> data = nnet.runModel(trainingData.subList(600, 768));
         int correct = 0;
@@ -77,10 +76,12 @@ public class SenseiTest {
             else if (d.getInput()[0] < d.getInput()[1] && d.getOutput()[0] < d.getOutput()[1]) correct++;
         }
         System.out.println(correct);
+
+        storage.saveModel(nnet, "E:\\ML\\datasets\\sample.json");
     }
 
     @Test
-    void sevenSegmentDisplay() {
+    void sevenSegmentDisplay() throws Exception {
         float[][] input = {
                 { 1, 1, 1, 1, 1, 1, 0 },
                 { 0, 0, 0, 0, 1, 1, 0 },
@@ -120,7 +121,7 @@ public class SenseiTest {
         layers.add(new Layer(8, 10, new Softmax(), new NormalizedXavier(), new Adam(learningRate, 8, 10)));
 
         Sensei model = new Sensei(layers, new BinaryCrossEntropy());
-        model.trainModel(trainingData, 50);
+        model.trainModel(trainingData, 1000);
 
         List<TrainingData> samples = model.runModel(trainingData);
 

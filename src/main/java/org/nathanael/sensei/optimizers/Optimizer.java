@@ -43,6 +43,10 @@ public class Optimizer {
         return 0;
     }
 
+    public float getAlpha() {
+        return alpha;
+    }
+
     public void updateCounter()  {
         counter++;
     }
