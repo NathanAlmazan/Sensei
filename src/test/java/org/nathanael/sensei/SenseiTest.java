@@ -10,11 +10,14 @@ import org.nathanael.sensei.dataset.Dataset;
 import org.nathanael.sensei.dataset.Normalization;
 import org.nathanael.sensei.initialization.HeInitial;
 import org.nathanael.sensei.initialization.NormalizedXavier;
+import org.nathanael.sensei.initialization.Xavier;
 import org.nathanael.sensei.loss.BinaryCrossEntropy;
+import org.nathanael.sensei.loss.MeanSquareError;
 import org.nathanael.sensei.optimizers.Adam;
 import org.nathanael.sensei.optimizers.RMSProp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -65,17 +68,87 @@ public class SenseiTest {
         layers.add(new Layer(4, 2, new Softmax(), new NormalizedXavier(), new Adam(learningRate, 4, 2)));
 
         Sensei nnet = new Sensei(layers, new BinaryCrossEntropy());
-        nnet.trainModel(trainingData.subList(0, 660), 100);
+        nnet.trainModel(trainingData.subList(0, 600), 100, 800);
 
-        List<TrainingData> data = nnet.runModel(trainingData.subList(660, 768));
+        List<TrainingData> data = nnet.runModel(trainingData.subList(600, 768));
         int correct = 0;
         for (TrainingData d : data) {
             if (d.getInput()[0] > d.getInput()[1] && d.getOutput()[0] > d.getOutput()[1]) correct++;
             else if (d.getInput()[0] < d.getInput()[1] && d.getOutput()[0] < d.getOutput()[1]) correct++;
-
-            System.out.println(d.getInput()[0] + " + " + d.getInput()[1] + " = " + d.getOutput()[0] + " + " + d.getOutput()[1]);
         }
         System.out.println(correct);
     }
 
+    @Test
+    void sevenSegmentDisplay() {
+        float[][] input = {
+                { 1, 1, 1, 1, 1, 1, 0 },
+                { 0, 0, 0, 0, 1, 1, 0 },
+                { 1, 0, 1, 1, 0, 1, 1 },
+                { 1, 0, 0, 1, 1, 1, 1 },
+                { 0, 1, 0, 0, 1, 1, 1 },
+                { 1, 1, 0, 1, 1, 0, 1 },
+                { 1, 1, 1, 1, 1, 0, 1 },
+                { 1, 0, 0, 0, 1, 1, 0 },
+                { 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 1, 0, 1, 1, 1, 1 }
+        };
+
+        float[][] output = {
+                { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+                { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }
+        };
+
+        List<TrainingData> trainingData = new ArrayList<>();
+        for (int x = 0; x < 10; x++) {
+            trainingData.add(new TrainingData(input[x], output[x]));
+        }
+
+        float learningRate = 0.02f;
+
+        List<Layer> layers = new ArrayList<>();
+        layers.add(new Layer(7, 8, new LeakyReLu(), new HeInitial(), new Adam(learningRate, 7, 8)));
+        layers.add(new Layer(8, 8, new LeakyReLu(), new HeInitial(), new Adam(learningRate, 8, 8)));
+        layers.add(new Layer(8, 10, new Softmax(), new NormalizedXavier(), new Adam(learningRate, 8, 10)));
+
+        Sensei model = new Sensei(layers, new BinaryCrossEntropy());
+        model.trainModel(trainingData, 50);
+
+        List<TrainingData> samples = model.runModel(trainingData);
+
+        int correct = 0;
+        for (TrainingData data : samples) {
+            if (findHighest(data.getInput()) == findHighest(data.getOutput()))
+                correct++;
+        }
+
+        for (TrainingData data : samples) {
+            System.out.println(Arrays.toString(data.getInput()));
+            System.out.println(Arrays.toString(data.getOutput()));
+        }
+
+        System.out.println("Score: " + correct);
+    }
+
+    public static int findHighest(float[] output) {
+        int index = 0;
+        float highest = 0;
+
+        for (int x = 0; x < output.length; x++) {
+            if (output[x] > highest) {
+                highest = output[x];
+                index = x;
+            }
+        }
+
+        return index;
+    }
 }

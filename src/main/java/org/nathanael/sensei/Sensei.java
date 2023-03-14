@@ -1,7 +1,6 @@
 package org.nathanael.sensei;
 
 import org.nathanael.sensei.loss.LossFunction;
-import org.nathanael.sensei.optimizers.Optimizer;
 
 import java.util.ArrayList;
 import java.util.List;
